@@ -11,8 +11,8 @@ const path = require('path');
 const VoiceText = require("voicetext");
 
 const VOICETEXT_API_KEY = process.env["VOICETEXT_API_KEY"];
-const VOICETEXT_VOLUME = 150;
-const LISTEN_PORT = 8080;
+const VOICETEXT_VOLUME = process.env["VOICETEXT_VOLUME"] || 150;
+const LISTEN_PORT = process.env["LISTEN_PORT"] || 8080;
 
 if(!VOICETEXT_API_KEY) {
     throw new Error("VOICETEXT_API_KEY is required.");
