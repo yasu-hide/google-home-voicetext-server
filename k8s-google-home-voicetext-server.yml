@@ -19,12 +19,15 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "500m"
+        envFrom:
+        - configMapRef:
+            name: google-home-voicetext-server
         env:
           - name: VOICETEXT_API_KEY
             valueFrom:
               secretKeyRef:
                 name: google-home-voicetext-server
-                key: voicetext-api-key
+                key: VOICETEXT_API_KEY
         ports:
         - containerPort: 8080
 ---
@@ -48,7 +51,7 @@ metadata:
   name: google-home-voicetext-server
 data:
   TZ: JST-9
-  LISTEN_INTERFACE: eth0
+  LISTEN_INTERFACE: 'eth0'
   VOICETEXT_SPEAKER: 'HIKARI'
   VOICETEXT_EMOTION: 'HAPPINESS'
   VOICETEXT_EMOTION_LEVEL: 'HIGH'
