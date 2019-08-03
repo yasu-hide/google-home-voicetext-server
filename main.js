@@ -36,19 +36,22 @@ app.post('/:deviceAddress', urlencodedParser, (req, res) => {
     if (!req.body) {
         return res.sendStatus(400);
     }
-    const text = req.body.text;
-    if(text) {
-        try {
-            getSpeechUrl(text, deviceAddress, (notifyRes) => {
-                console.log(notifyRes);
-                res.send("Say:" + text + "\n");
-            })
-        }
-        catch (err) {
-            console.error(err);
-            res.sendStatus(500);
-            res.send(err);
-        }
+    const speak = {
+        text: req.body.text,
+        speaker: req.body.speaker,
+        emotion: req.body.emotion,
+        emotion_level: req.body.emotion_level
+    };
+    try {
+        getSpeechUrl(speak, deviceAddress, (notifyRes) => {
+            console.log(notifyRes);
+            res.send("Say:" + speak.text + "\n");
+        })
+    }
+    catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+        res.send(err);
     }
 });
 app.get('/:deviceAddress', (req, res) => {
@@ -101,14 +104,14 @@ const getSpeaker = (speaker=process.env["VOICETEXT_SPEAKER"]) => {
 
 const getEmotion = (emotion=process.env["VOICETEXT_EMOTION"]) => {
     switch(emotion) {
-        case 'HAPINESS':
-            return voice.EMOTION.HAPINESS;
+        case 'HAPPINESS':
+            return voice.EMOTION.HAPPINESS;
         case 'ANGER':
             return voice.EMOTION.ANGER;
         case 'SADNESS':
             return voice.EMOTION.SADNESS;
         default:
-            return voice.EMOTION.NONE;
+            return voice.EMOTION.HAPPINESS;
     }
 };
 
@@ -123,18 +126,18 @@ const getEmotionLevel = (emotion_level=process.env["VOICETEXT_EMOTION_LEVEL"]) =
         case 'EXTREME':
             return voice.EMOTION_LEVEL.EXTREME;
         default:
-            return voice.EMOTION_LEVEL.NONE;
+            return voice.EMOTION_LEVEL.NORMAL;
     }
 };
 
-const convertToText = (text, host) => {
+const convertToText = (speak, host) => {
     return new Promise((resolve, reject) => {
         voice
-            .speaker(getSpeaker())
-            .emotion(getEmotion())
-            .emotion_level(getEmotionLevel())
+            .speaker(getSpeaker(speak.speaker))
+            .emotion(getEmotion(speak.emotion))
+            .emotion_level(getEmotionLevel(speak.emotion_level))
             .volume(VOICETEXT_VOLUME)
-            .speak(text, (e, buf) => {
+            .speak(speak.text, (e, buf) => {
                 if(e) {
                     console.error(e);
                     reject(e);
@@ -154,8 +157,8 @@ const convertToText = (text, host) => {
     });
 };
 
-const getSpeechUrl = (text, host, callback) => {
-    convertToText(text, host).then((result, reject) => {
+const getSpeechUrl = (speak, host, callback) => {
+    convertToText(speak, host).then((result, reject) => {
         onDeviceUp(result, host, (res) => {
             callback(res);
         });
