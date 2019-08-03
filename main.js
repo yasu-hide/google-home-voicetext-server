@@ -60,7 +60,7 @@ app.get('/:deviceAddress', (req, res) => {
     if(!deviceAddress) {
         res.status(400).send("Invalid Parameters.");
     }
-    const filepath = path.join(__dirname, deviceAddress + ".wav");
+    const filepath = path.join(__dirname, deviceAddress + ".ogg");
     const speechfile = fs.readFileSync(filepath, "binary");
     res.setHeader("Content-Length", speechfile.length);
     res.write(speechfile, "binary");
@@ -137,13 +137,14 @@ const convertToText = (speak, host) => {
             .emotion(getEmotion(speak.emotion))
             .emotion_level(getEmotionLevel(speak.emotion_level))
             .volume(VOICETEXT_VOLUME)
+            .format(voice.FORMAT.OGG)
             .speak(speak.text, (e, buf) => {
                 if(e) {
                     console.error(e);
                     reject(e);
                 }
                 else {
-                    const filepath = path.join(__dirname, host + ".wav");
+                    const filepath = path.join(__dirname, host + ".ogg");
                     fs.writeFileSync(filepath, buf, 'binary');
                     const endpointUrl = url.format({
                         protocol: 'http',
