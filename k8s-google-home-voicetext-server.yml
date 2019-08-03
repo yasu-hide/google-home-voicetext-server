@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: google-home-voicetext-server
+spec:
+  selector:
+    matchLabels:
+      app: google-home-voicetext-server
+  template:
+    metadata:
+      labels:
+        app: google-home-voicetext-server
+    spec:
+      containers:
+      - name: google-home-voicetext-server
+        image: vet5lqplpecmpnqb/google-home-voicetext-server
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        env:
+          - name: VOICETEXT_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: google-home-voicetext-server
+                key: voicetext-api-key
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: google-home-voicetext-server
+spec:
+  selector:
+    app: google-home-voicetext-server
+  ports:
+  - name: server
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: google-home-voicetext-server
+data:
+  TZ: JST-9
+  LISTEN_INTERFACE: eth0

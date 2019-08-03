@@ -1,0 +1,22 @@
+{
+    "name": "googlehome-voicetext-server",
+    "version": "1.0.0",
+    "description": "",
+    "main": "main.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "yasuhide",
+    "license": "MIT",
+    "dependencies": {
+        "date-utils": "^1.2.21",
+        "body-parser": "^1.18.3",
+        "castv2-client": "^1.1.2",
+        "express": "^4.17.1",
+        "fs": "0.0.1-security",
+        "os": "^0.1.1",
+        "voicetext": "0.0.7",
+        "url": "^0.11.0",
+        "path": "0.12.7"
+    }
+}
