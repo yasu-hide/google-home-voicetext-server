@@ -35,6 +35,14 @@ curl -X POST -d "text=喋らせる言葉" http://(サーバIPアドレス)/(Goog
 任意のGoogle Homeを指定可能にした都合です。
 
 # URLで指定できる項目 (FORM VALUE)
+実行例
+```
+curl -X POST http://192.168.20.140:8080/192.168.20.200 \
+  -d "text=おバブやかましい" \
+  -d "speaker=bear" \
+  -d "emotion=anger" \
+  -d "emotion_level=extreme"
+```
 ## text (必須)
 喋らせたい内容です。
 
