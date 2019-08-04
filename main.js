@@ -84,7 +84,7 @@ const getListenAddress = () => {
 };
 
 const getSpeaker = (speaker=process.env["VOICETEXT_SPEAKER"]) => {
-    switch(speaker) {
+    switch(speaker.toUpperCase()) {
         case 'SHOW':
             return voice.SPEAKER.SHOW;
         case 'BEAR':
@@ -103,7 +103,7 @@ const getSpeaker = (speaker=process.env["VOICETEXT_SPEAKER"]) => {
 };
 
 const getEmotion = (emotion=process.env["VOICETEXT_EMOTION"]) => {
-    switch(emotion) {
+    switch(emotion.toUpperCase()) {
         case 'HAPPINESS':
             return voice.EMOTION.HAPPINESS;
         case 'ANGER':
@@ -118,12 +118,16 @@ const getEmotion = (emotion=process.env["VOICETEXT_EMOTION"]) => {
 const getEmotionLevel = (emotion_level=process.env["VOICETEXT_EMOTION_LEVEL"]) => {
     switch(emotion_level) {
         case 'NORMAL':
+        case 1:
             return voice.EMOTION_LEVEL.NORMAL;
         case 'HIGH':
+        case 2:
             return voice.EMOTION_LEVEL.HIGH;
         case 'SUPER':
+        case 3:
             return voice.EMOTION_LEVEL.SUPER;
         case 'EXTREME':
+        case 4:
             return voice.EMOTION_LEVEL.EXTREME;
         default:
             return voice.EMOTION_LEVEL.NORMAL;
