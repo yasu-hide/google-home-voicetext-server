@@ -137,3 +137,20 @@ export VOICETEXT_SPEAKER=BEAR
 音量を数値で指定できます。
 
 設定できる項目は、[VoiceTextのAPIマニュアル](https://cloud.voicetext.jp/webapi/docs/api)のパラメータを参照してください。
+
+# k8s
+## Secret事前準備 (prepare)
+```
+kubectl create secret generic google-home-voicetext-server \
+  --from-literal=VOICETEXT_API_KEY={取得したAPIキー}
+```
+## ConfigMap編集
+パラメータを編集します。
+```
+vi k8s-google-home-voicetext-server.yml
+```
+
+## 適用 (apply)
+```
+$ kubectl apply -f k8s-google-home-voicetext-server.yml
+```
