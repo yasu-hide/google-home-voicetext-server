@@ -29,7 +29,7 @@ spec:
                 name: google-home-voicetext-server
                 key: VOICETEXT_API_KEY
         ports:
-        - containerPort: 8080
+        - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
@@ -41,8 +41,8 @@ spec:
   ports:
   - name: server
     protocol: TCP
-    port: 8080
-    targetPort: 8080
+    port: 80
+    targetPort: 80
   type: LoadBalancer
 ---
 apiVersion: extensions/v1beta1
@@ -56,7 +56,7 @@ spec:
       - path: /
         backend:
           serviceName: google-home-voicetext-server
-          servicePort: 8080
+          servicePort: 80
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -65,7 +65,7 @@ metadata:
 data:
   TZ: JST-9
   LISTEN_INTERFACE: 'eth0'
-  LISTEN_PORT: '8080'
+  LISTEN_PORT: '80'
   VOICETEXT_SPEAKER: 'HIKARI'
   VOICETEXT_EMOTION: 'HAPPINESS'
   VOICETEXT_EMOTION_LEVEL: 'HIGH'
