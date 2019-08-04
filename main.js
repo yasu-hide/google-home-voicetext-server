@@ -1,5 +1,5 @@
-'use strict';
-require('date-utils')
+'use strict'
+require('date-utils');
 const Castv2Client = require("castv2-client").Client;
 const DefaultMediaReceiver = require("castv2-client").DefaultMediaReceiver;
 const express = require('express');
@@ -17,6 +17,7 @@ const LISTEN_PORT = process.env["LISTEN_PORT"] || 8080;
 if(!VOICETEXT_API_KEY) {
     throw new Error("VOICETEXT_API_KEY is required.");
 }
+
 const app = express();
 const urlencodedParser = bodyParser.urlencoded({extended: false});
 const voice = new VoiceText(VOICETEXT_API_KEY);
@@ -34,7 +35,7 @@ app.post('/:deviceAddress', urlencodedParser, (req, res) => {
     const deviceAddress = req.params.deviceAddress;
     console.log(new Date().toFormat("YYYY-MM-DD HH24:MI:SS") + " POST " + deviceAddress);
     if (!req.body) {
-        return res.sendStatus(400);
+        return res.status(400).send("Require BODY.");
     }
     const speak = {
         text: req.body.text,
@@ -43,21 +44,48 @@ app.post('/:deviceAddress', urlencodedParser, (req, res) => {
         emotion_level: req.body.emotion_level
     };
     if(!speak.text) {
-        res.send("Required String parameter 'text' is not present.");
-        return res.sendStatus(400);
+        return res.status(400).send("Required String parameter 'text' is not present.");
     }
-    try {
-        getSpeechUrl(speak, deviceAddress, (notifyRes) => {
-            console.log(notifyRes);
-            res.send("Say:" + speak.text + "\n");
-        })
-    }
-    catch (err) {
-        console.error(err);
-        res.sendStatus(500);
-        res.send(err);
-    }
+    Promise.all([connectToCast(deviceAddress), receiveVoicetext(speak)]).then((resolves) => {
+        return new Promise((resolve, reject) => {
+            const client = resolves[0];
+            const voicebuf = resolves[1];
+            const filepath = path.join(__dirname, deviceAddress + ".ogg");
+            try {
+                fs.writeFileSync(filepath, voicebuf, 'binary');
+            }
+            catch(err) {
+                return reject(err.message);
+            }
+            const endpointUrl = url.format({
+                protocol: 'http',
+                port: LISTEN_PORT,
+                hostname: getListenAddress(),
+                pathname: deviceAddress
+            }).toString();
+            client.launch(DefaultMediaReceiver, (err, player) => {
+                if(err) {
+                    return reject(err);
+                }
+                const media = {
+                    contentId: endpointUrl,
+                    contentType: 'audio/ogg',
+                    streamType: 'BUFFERED'
+                };
+                player.load(media, {autoplay: true}, (err, status) => {
+                    client.close();
+                    if(err) {
+                        return reject(err);
+                    }
+                    console.log("Device notified. " + deviceAddress);
+                    resolve("OK");
+                });
+            });
+        });
+    }).then((success) => res.status(200).send(success + " Say:" + speak.text + "\n")
+    ).catch((err) => res.status(400).send(err));
 });
+
 app.get('/:deviceAddress', (req, res) => {
     const deviceAddress = req.params.deviceAddress;
     console.log(new Date().toFormat("YYYY-MM-DD HH24:MI:SS") + " GET " + deviceAddress);
@@ -65,10 +93,11 @@ app.get('/:deviceAddress', (req, res) => {
         res.status(400).send("Invalid Parameters.");
     }
     const filepath = path.join(__dirname, deviceAddress + ".ogg");
-    const speechfile = fs.readFileSync(filepath, "binary");
-    res.setHeader("Content-Length", speechfile.length);
-    res.write(speechfile, "binary");
-    res.end();
+    res.setHeader("Content-Length", fs.statSync(filepath).size);
+    const filestream = fs.createReadStream(filepath, "binary");
+    filestream.on('data', (chunk) => res.write(chunk, "binary"));
+    filestream.on('end', () => res.end());
+    filestream.on('error', (err) => res.status(400).send(err.message));
 });
 
 const getListenAddress = () => {
@@ -138,72 +167,34 @@ const getEmotionLevel = (emotion_level=process.env["VOICETEXT_EMOTION_LEVEL"]) =
     }
 };
 
-const convertToText = (speak, host) => {
+const connectToCast = (host) => {
+    return new Promise((resolve, reject) => {
+        const client = new Castv2Client;
+        client.connect(host, () => resolve(client));
+        client.on('error', (err) => {
+            client.close();
+            return reject(err.message);
+        });
+    }
+)};
+
+const receiveVoicetext = (speak) => {
     return new Promise((resolve, reject) => {
         voice
-            .speaker(getSpeaker(speak.speaker))
-            .emotion(getEmotion(speak.emotion))
-            .emotion_level(getEmotionLevel(speak.emotion_level))
-            .volume(VOICETEXT_VOLUME)
-            .format(voice.FORMAT.OGG)
-            .speak(speak.text, (e, buf) => {
-                if(e) {
-                    console.error(e);
-                    reject(e);
-                }
-                else {
-                    const filepath = path.join(__dirname, host + ".ogg");
-                    fs.writeFileSync(filepath, buf, 'binary');
-                    const endpointUrl = url.format({
-                        protocol: 'http',
-                        port: LISTEN_PORT,
-                        hostname: getListenAddress(),
-                        pathname: host
-                    });
-                    resolve(endpointUrl.toString());
-                }
-            });
-    });
-};
-
-const getSpeechUrl = (speak, host, callback) => {
-    convertToText(speak, host).then((result, reject) => {
-        onDeviceUp(result, host, (res) => {
-            callback(res);
-        });
-    }).catch(function onRejected(error) {
-        console.error(error);
-    });
-};
-
-const onDeviceUp = (speechurl, host, callback) => {
-    const client = new Castv2Client;
-    client.connect(host, () => {
-        client.launch(DefaultMediaReceiver, (err, player) => {
-            const media = {
-                contentId: speechurl,
-                contentType: 'audio/mp3',
-                streamType: 'BUFFERED'
-            };
-            if(speechurl.endsWith('wav')) {
-                media.contentType = 'audio/wav';
+        .speaker(getSpeaker(speak.speaker))
+        .emotion(getEmotion(speak.emotion))
+        .emotion_level(getEmotionLevel(speak.emotion_level))
+        .volume(VOICETEXT_VOLUME)
+        .format(voice.FORMAT.OGG)
+        .speak(speak.text, (err, voicebuf) => {
+            if(err) {
+                return reject(err);
             }
-            else if (speechurl.endsWith('ogg')) {
-                media.contentType = 'audio/ogg';
-            }
-            player.load(media, {autoplay: true}, (err, status) => {
-                client.close();
-                callback('Device notified.', speechurl);
-            });
+            resolve(voicebuf);
         });
-    });
-    client.on('error', (err) => {
-        console.error("Error: %s", err.message);
-        client.close();
-        callback("error");
-    });
-};
+    }
+)};
 
 app.listen(LISTEN_PORT, () => {
     console.log('Start server', getListenAddress() + ':' + LISTEN_PORT);
-})
+});
