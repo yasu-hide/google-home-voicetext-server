@@ -47,6 +47,9 @@ curl -X POST http://192.168.20.140:8080/192.168.20.200 \
 喋らせたい内容です。
 
 指定をしないとエラーが発生します。
+```
+Required String parameter 'text' is not present.
+```
 
 ## speaker (任意)
 話者を指定できます。

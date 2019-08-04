@@ -42,6 +42,10 @@ app.post('/:deviceAddress', urlencodedParser, (req, res) => {
         emotion: req.body.emotion,
         emotion_level: req.body.emotion_level
     };
+    if(!speak.text) {
+        res.send("Required String parameter 'text' is not present.");
+        return res.sendStatus(400);
+    }
     try {
         getSpeechUrl(speak, deviceAddress, (notifyRes) => {
             console.log(notifyRes);
