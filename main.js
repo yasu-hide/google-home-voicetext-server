@@ -8,6 +8,7 @@ const fs = require("fs");
 const os = require('os');
 const url = require("url");
 const path = require('path');
+const crypto = require('crypto');
 const VoiceText = require("voicetext");
 
 const VOICETEXT_API_KEY = process.env["VOICETEXT_API_KEY"];
@@ -50,12 +51,15 @@ app.post('/:deviceAddress', urlencodedParser, (req, res) => {
         return new Promise((resolve, reject) => {
             const client = resolves[0];
             const voicebuf = resolves[1];
-            const filepath = path.join(__dirname, deviceAddress + ".ogg");
+            const tmppath = path.join(__dirname, 'voice-' + crypto.randomBytes(4).readUInt32LE(0) + '.ogg');
+            const filepath = path.join(__dirname, deviceAddress + '.ogg');
             try {
-                fs.writeFileSync(filepath, voicebuf, 'binary');
+                fs.writeFileSync(tmppath, voicebuf, 'binary');
+                fs.renameSync(tmppath, filepath);
             }
             catch(err) {
-                return reject(err.message);
+                fs.unlinkSync(tmppath);
+                return reject(err);
             }
             const endpointUrl = url.format({
                 protocol: 'http',
