@@ -36,7 +36,7 @@ app.post('/:deviceAddress', urlencodedParser, (req, res) => {
     const deviceAddress = req.params.deviceAddress;
     console.log(new Date().toFormat("YYYY-MM-DD HH24:MI:SS") + " POST " + deviceAddress);
     if (!req.body) {
-        return res.status(400).send("Require BODY.");
+        return res.status(400).send("Invalid Parameters.");
     }
     const speak = {
         text: req.body.text,
