@@ -22,7 +22,7 @@ const app = express();
 const urlencodedParser = bodyParser.urlencoded({extended: false});
 const voice = new VoiceText(VOICETEXT_API_KEY);
 
-app.use(function(req, res, next) {
+app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header(
         "Access-Control-Allow-Headers",
