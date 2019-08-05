@@ -83,7 +83,7 @@ app.post('/:deviceAddress', urlencodedParser, (req, res) => {
             });
         });
     }).then((success) => res.status(200).send(success + " Say:" + speak.text + "\n")
-    ).catch((err) => res.status(400).send(err));
+    ).catch((err) => res.status(400).send(err.toString()));
 });
 
 app.get('/:deviceAddress', (req, res) => {
@@ -97,7 +97,7 @@ app.get('/:deviceAddress', (req, res) => {
     const filestream = fs.createReadStream(filepath, "binary");
     filestream.on('data', (chunk) => res.write(chunk, "binary"));
     filestream.on('end', () => res.end());
-    filestream.on('error', (err) => res.status(400).send(err.message));
+    filestream.on('error', (err) => res.status(400).send(err));
 });
 
 const getListenAddress = () => {
@@ -173,7 +173,7 @@ const connectToCast = (host) => {
         client.connect(host, () => resolve(client));
         client.on('error', (err) => {
             client.close();
-            return reject(err.message);
+            return reject(err);
         });
     }
 )};
