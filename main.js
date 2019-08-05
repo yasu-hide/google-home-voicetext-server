@@ -20,7 +20,15 @@ if(!VOICETEXT_API_KEY) {
 }
 
 const app = express();
-const urlencodedParser = bodyParser.urlencoded({extended: false});
+app.use(bodyParser.urlencoded({extended: false}));
+app.use((req, res, next) => {
+    bodyParser.json()(req, res, (err) => {
+        if(err) {
+            return res.status(400).send(err.toString());
+        }
+        next();
+    });
+});
 const voice = new VoiceText(VOICETEXT_API_KEY);
 
 app.use((req, res, next) => {
@@ -32,7 +40,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.post('/:deviceAddress', urlencodedParser, (req, res) => {
+app.post('/:deviceAddress', (req, res) => {
     const deviceAddress = req.params.deviceAddress;
     console.log(new Date().toFormat("YYYY-MM-DD HH24:MI:SS") + " POST " + deviceAddress);
     if (!req.body) {
