@@ -14,6 +14,7 @@ const VoiceText = require("voicetext");
 const VOICETEXT_API_KEY = process.env["VOICETEXT_API_KEY"];
 const VOICETEXT_VOLUME = process.env["VOICETEXT_VOLUME"] || 150;
 const LISTEN_PORT = process.env["LISTEN_PORT"] || 8080;
+const voicedir = path.join(__dirname, 'voice');
 
 if(!VOICETEXT_API_KEY) {
     throw new Error("VOICETEXT_API_KEY is required.");
@@ -55,19 +56,20 @@ app.post('/:deviceAddress', (req, res) => {
     if(!speak.text) {
         return res.status(400).send("Required String parameter 'text' is not present.");
     }
-    Promise.all([connectToCast(deviceAddress), receiveVoicetext(speak)]).then((resolves) => {
+    Promise.all([connectToCast(deviceAddress), receiveVoicetext(speak), prepareDir(voicedir)]).then((resolves) => {
         return new Promise((resolve, reject) => {
             const client = resolves[0];
             const voicebuf = resolves[1];
-            const tmppath = path.join(__dirname, 'voice-' + crypto.randomBytes(4).readUInt32LE(0) + '.ogg');
-            const filepath = path.join(__dirname, deviceAddress + '.ogg');
+            const tmppath = path.join(voicedir, 'tmp-' + crypto.randomBytes(4).readUInt32LE(0) + '.ogg');
+            const filepath = path.join(voicedir, deviceAddress + '.ogg');
             try {
                 fs.writeFileSync(tmppath, voicebuf, 'binary');
                 fs.renameSync(tmppath, filepath);
             }
             catch(err) {
-                fs.unlinkSync(tmppath);
-                return reject(err);
+                return fs.unlink(tmppath, () => {
+                    return reject(err);
+                });
             }
             const endpointUrl = url.format({
                 protocol: 'http',
@@ -104,7 +106,7 @@ app.get('/:deviceAddress', (req, res) => {
     if(!deviceAddress) {
         res.status(400).send("Invalid Parameters.");
     }
-    const filepath = path.join(__dirname, deviceAddress + ".ogg");
+    const filepath = path.join(voicedir, deviceAddress + ".ogg");
     res.setHeader("Content-Length", fs.statSync(filepath).size);
     const filestream = fs.createReadStream(filepath, "binary");
     filestream.on('data', (chunk) => res.write(chunk, "binary"));
@@ -187,8 +189,8 @@ const connectToCast = (host) => {
             client.close();
             return reject(err);
         });
-    }
-)};
+    });
+};
 
 const receiveVoicetext = (speak) => {
     return new Promise((resolve, reject) => {
@@ -204,8 +206,19 @@ const receiveVoicetext = (speak) => {
             }
             resolve(voicebuf);
         });
-    }
-)};
+    });
+};
+
+const prepareDir = (dirpath) => {
+    return new Promise((resolve, reject) => {
+        return fs.mkdir(dirpath, (err) => {
+            if (err && err.code !== 'EEXIST') {
+                return reject(err);
+            }
+            return resolve(dirpath);
+        });
+    });
+};
 
 app.listen(LISTEN_PORT, () => {
     console.log('Start server', getListenAddress() + ':' + LISTEN_PORT);
