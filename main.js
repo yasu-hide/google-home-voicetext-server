@@ -103,15 +103,30 @@ app.post('/:deviceAddress', (req, res) => {
 app.get('/:deviceAddress', (req, res) => {
     const deviceAddress = req.params.deviceAddress;
     console.log(new Date().toFormat("YYYY-MM-DD HH24:MI:SS") + " GET " + deviceAddress);
-    if(!deviceAddress) {
-        res.status(400).send("Invalid Parameters.");
-    }
+
     const filepath = path.join(voicedir, deviceAddress + ".ogg");
-    res.setHeader("Content-Length", fs.statSync(filepath).size);
+    const httperror = (errcode) => {
+        switch(errcode) {
+            case "EPERM":
+                return res.status(403);
+            case "ENOENT":
+                return res.status(404);
+            default:
+                return res.status(500);
+        }
+    }
+    try {
+        res.setHeader("Content-Length", fs.statSync(filepath).size);
+    }
+    catch (err) {
+        return httperror(err.code).send();
+    }
     const filestream = fs.createReadStream(filepath, "binary");
     filestream.on('data', (chunk) => res.write(chunk, "binary"));
     filestream.on('end', () => res.end());
-    filestream.on('error', (err) => res.status(400).send(err));
+    filestream.on('error', (err) => {
+        return httperror(err.code).send();
+    });
 });
 
 const getListenAddress = () => {
@@ -204,7 +219,7 @@ const receiveVoicetext = (speak) => {
             if(err) {
                 return reject(err);
             }
-            resolve(voicebuf);
+            return resolve(voicebuf);
         });
     });
 };
