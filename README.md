@@ -153,10 +153,22 @@ kubectl create secret generic google-home-voicetext-server \
 ## ConfigMap編集
 パラメータを編集します。
 ```
-vi k8s-google-home-voicetext-server.yml
+$ vi k8s-google-home-voicetext-server.yml
 ```
 
 ## 適用 (apply)
 ```
 $ kubectl apply -f k8s-google-home-voicetext-server.yml
+```
+
+# docker-compose
+## 環境設定ファイル準備 (.env)
+パラメータを編集します。
+```
+$ vi .env
+```
+
+## 起動 (up)
+```
+$ docker-compose up -d
 ```

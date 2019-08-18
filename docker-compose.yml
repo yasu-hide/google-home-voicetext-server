@@ -1,0 +1,17 @@
+---
+version: "3"
+services:
+  google-home-voicetext-server:
+    image: vet5lqplpecmpnqb/google-home-voicetext-server
+    ports:
+      - ${LISTEN_PORT}:${LISTEN_PORT}
+    networks:
+      - bridge
+    env_file:
+      - .env
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+networks:
+  bridge:
