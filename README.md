@@ -8,6 +8,7 @@ Dockerで動作させる前提で、マルチキャストDNS(mdns)を使わな�
 クラウドプッシュ連携はサーバと分離しました。
 - Firebase(Firestore) https://github.com/yasu-hide/google-home-voicetext-firebase
 - Beebotte(MQTT) https://github.com/yasu-hide/google-home-voicetext-mqtt
+- Amazonダッシュボタン https://github.com/yasu-hide/google-home-voicetext-dashbutton
 
 ## 変更1. mdnsを諦めた
 Google Homeはmdns(Bonjour,dns-sd)によるZeroconfに対応しています。
