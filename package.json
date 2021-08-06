@@ -13,7 +13,7 @@
         "body-parser": "^1.18.3",
         "castv2-client": "^1.1.2",
         "express": "^4.17.1",
-        "fs": "0.0.1-security",
+        "fs": "0.0.2",
         "os": "^0.1.1",
         "voicetext": "0.0.7",
         "url": "^0.11.0",
