@@ -1,4 +1,4 @@
-FROM node:11-stretch-slim
+FROM node:17.2.0-stretch-slim
 WORKDIR /tmp
 COPY package.json /tmp/package.json
 RUN npm config set unsafe-perm true \
