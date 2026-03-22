@@ -1,4 +1,4 @@
-FROM node:20.19.2-slim
+FROM node:20.20.0-slim
 WORKDIR /tmp
 COPY package.json /tmp/package.json
 RUN npm config set unsafe-perm true \
