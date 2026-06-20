@@ -9,12 +9,37 @@ const os = require('os');
 const url = require("url");
 const path = require('path');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const VoiceText = require("voicetext");
 
 const VOICETEXT_API_KEY = process.env["VOICETEXT_API_KEY"];
 const VOICETEXT_VOLUME = process.env["VOICETEXT_VOLUME"] || 150;
 const LISTEN_PORT = process.env["LISTEN_PORT"] || 8080;
 const voicedir = path.join(__dirname, 'voice');
+
+const voiceLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const VALID_DEVICE_ADDRESS = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,253}$/;
+
+const validateDeviceAddress = (deviceAddress) => {
+    if (!deviceAddress || !VALID_DEVICE_ADDRESS.test(deviceAddress)) {
+        return null;
+    }
+    return deviceAddress;
+};
+
+const safeFilePath = (filename) => {
+    const resolved = path.resolve(voicedir, filename);
+    if (!resolved.startsWith(path.resolve(voicedir) + path.sep)) {
+        return null;
+    }
+    return resolved;
+};
 
 if(!VOICETEXT_API_KEY) {
     throw new Error("VOICETEXT_API_KEY is required.");
@@ -42,7 +67,10 @@ app.use((req, res, next) => {
 });
 
 app.post('/:deviceAddress', (req, res) => {
-    const deviceAddress = req.params.deviceAddress;
+    const deviceAddress = validateDeviceAddress(req.params.deviceAddress);
+    if (!deviceAddress) {
+        return res.status(400).send("Invalid device address.");
+    }
     console.log(new Date().toFormat("YYYY-MM-DD HH24:MI:SS") + " POST " + deviceAddress);
     if (!req.body) {
         return res.status(400).send("Invalid Parameters.");
@@ -61,7 +89,7 @@ app.post('/:deviceAddress', (req, res) => {
             const client = resolves[0];
             const voicebuf = resolves[1];
             const tmppath = path.join(voicedir, 'tmp-' + crypto.randomBytes(4).readUInt32LE(0) + '.ogg');
-            const filepath = path.join(voicedir, deviceAddress + '.ogg');
+            const filepath = safeFilePath(deviceAddress + '.ogg');
             try {
                 fs.writeFileSync(tmppath, voicebuf, 'binary');
                 fs.renameSync(tmppath, filepath);
@@ -92,19 +120,22 @@ app.post('/:deviceAddress', (req, res) => {
                         return reject(err);
                     }
                     console.log("Device notified. " + deviceAddress);
-                    resolve("OK");
+                    resolve();
                 });
             });
         });
-    }).then((success) => res.status(200).send(success + " Say:" + speak.text + "\n")
+    }).then(() => res.status(200).type('text/plain').send("OK\n")
     ).catch((err) => res.status(400).send(err.toString()));
 });
 
-app.get('/:deviceAddress', (req, res) => {
-    const deviceAddress = req.params.deviceAddress;
+app.get('/:deviceAddress', voiceLimiter, (req, res) => {
+    const deviceAddress = validateDeviceAddress(req.params.deviceAddress);
+    if (!deviceAddress) {
+        return res.status(400).send("Invalid device address.");
+    }
     console.log(new Date().toFormat("YYYY-MM-DD HH24:MI:SS") + " GET " + deviceAddress);
 
-    const filepath = path.join(voicedir, deviceAddress + ".ogg");
+    const filepath = safeFilePath(deviceAddress + ".ogg");
     const httperror = (errcode) => {
         switch(errcode) {
             case "EPERM":
