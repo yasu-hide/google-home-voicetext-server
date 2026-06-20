@@ -5,15 +5,16 @@ const DefaultMediaReceiver = require("castv2-client").DefaultMediaReceiver;
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require("fs");
+const https = require('https');
 const os = require('os');
 const url = require("url");
 const path = require('path');
 const crypto = require('crypto');
+const querystring = require('querystring');
 const rateLimit = require('express-rate-limit');
-const VoiceText = require("voicetext");
 
 const VOICETEXT_API_KEY = process.env["VOICETEXT_API_KEY"];
-const VOICETEXT_VOLUME = process.env["VOICETEXT_VOLUME"] || 150;
+const VOICETEXT_VOLUME = parseInt(process.env["VOICETEXT_VOLUME"] || '150', 10);
 const LISTEN_PORT = process.env["LISTEN_PORT"] || 8080;
 const voicedir = path.join(__dirname, 'voice');
 
@@ -55,7 +56,6 @@ app.use((req, res, next) => {
         next();
     });
 });
-const voice = new VoiceText(VOICETEXT_API_KEY);
 
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
@@ -177,53 +177,30 @@ const getListenAddress = () => {
 };
 
 const getSpeaker = (speaker=process.env["VOICETEXT_SPEAKER"]) => {
-    switch(speaker.toUpperCase()) {
-        case 'SHOW':
-            return voice.SPEAKER.SHOW;
-        case 'BEAR':
-            return voice.SPEAKER.BEAR;
-        case 'HIKARI':
-            return voice.SPEAKER.HIKARI;
-        case 'HARUKA':
-            return voice.SPEAKER.HARUKA;
-        case 'SANTA':
-            return voice.SPEAKER.SANTA;
-        case 'TAKERU':
-            return voice.SPEAKER.TAKERU;
-        default:
-            return voice.SPEAKER.HIKARI;
-    }   
+    switch((speaker || '').toUpperCase()) {
+        case 'SHOW':   return 'show';
+        case 'BEAR':   return 'bear';
+        case 'HARUKA': return 'haruka';
+        case 'SANTA':  return 'santa';
+        case 'TAKERU': return 'takeru';
+        default:       return 'hikari';
+    }
 };
 
 const getEmotion = (emotion=process.env["VOICETEXT_EMOTION"]) => {
-    switch(emotion.toUpperCase()) {
-        case 'HAPPINESS':
-            return voice.EMOTION.HAPPINESS;
-        case 'ANGER':
-            return voice.EMOTION.ANGER;
-        case 'SADNESS':
-            return voice.EMOTION.SADNESS;
-        default:
-            return voice.EMOTION.HAPPINESS;
+    switch((emotion || '').toUpperCase()) {
+        case 'ANGER':   return 'anger';
+        case 'SADNESS': return 'sadness';
+        default:        return 'happiness';
     }
 };
 
 const getEmotionLevel = (emotion_level=process.env["VOICETEXT_EMOTION_LEVEL"]) => {
     switch(emotion_level) {
-        case 'NORMAL':
-        case 1:
-            return voice.EMOTION_LEVEL.NORMAL;
-        case 'HIGH':
-        case 2:
-            return voice.EMOTION_LEVEL.HIGH;
-        case 'SUPER':
-        case 3:
-            return voice.EMOTION_LEVEL.SUPER;
-        case 'EXTREME':
-        case 4:
-            return voice.EMOTION_LEVEL.EXTREME;
-        default:
-            return voice.EMOTION_LEVEL.NORMAL;
+        case 'HIGH':    case 2: return 2;
+        case 'SUPER':   case 3: return 3;
+        case 'EXTREME': case 4: return 4;
+        default:                return 1;
     }
 };
 
@@ -240,18 +217,37 @@ const connectToCast = (host) => {
 
 const receiveVoicetext = (speak) => {
     return new Promise((resolve, reject) => {
-        voice
-        .speaker(getSpeaker(speak.speaker))
-        .emotion(getEmotion(speak.emotion))
-        .emotion_level(getEmotionLevel(speak.emotion_level))
-        .volume(VOICETEXT_VOLUME)
-        .format(voice.FORMAT.OGG)
-        .speak(speak.text, (err, voicebuf) => {
-            if(err) {
-                return reject(err);
-            }
-            return resolve(voicebuf);
+        const postData = querystring.stringify({
+            text: speak.text,
+            speaker: getSpeaker(speak.speaker),
+            emotion: getEmotion(speak.emotion),
+            emotion_level: getEmotionLevel(speak.emotion_level),
+            volume: VOICETEXT_VOLUME,
+            format: 'ogg',
         });
+        const req = https.request({
+            hostname: 'api.voicetext.jp',
+            path: '/v1/tts',
+            method: 'POST',
+            auth: `${VOICETEXT_API_KEY}:`,
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Length': Buffer.byteLength(postData),
+            },
+        }, (res) => {
+            const chunks = [];
+            res.on('data', (chunk) => chunks.push(chunk));
+            res.on('end', () => {
+                if (res.statusCode === 200) {
+                    resolve(Buffer.concat(chunks));
+                } else {
+                    reject(new Error(`VoiceText API error: ${res.statusCode} ${Buffer.concat(chunks).toString()}`));
+                }
+            });
+        });
+        req.on('error', reject);
+        req.write(postData);
+        req.end();
     });
 };
 
