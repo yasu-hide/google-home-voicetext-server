@@ -9,14 +9,15 @@
     "author": "yasuhide",
     "license": "MIT",
     "dependencies": {
-        "date-utils": "^1.2.21",
         "body-parser": "^1.18.3",
         "castv2-client": "^1.1.2",
+        "date-utils": "^1.2.21",
         "express": "^4.17.1",
+        "express-rate-limit": "^8.5.2",
         "fs": "0.0.2",
         "os": "^0.1.1",
-        "voicetext": "0.0.7",
+        "path": "0.12.7",
         "url": "^0.11.0",
-        "path": "0.12.7"
+        "voicetext": "0.0.7"
     }
 }

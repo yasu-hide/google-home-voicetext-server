@@ -9,12 +9,20 @@ const os = require('os');
 const url = require("url");
 const path = require('path');
 const crypto = require('crypto');
+const rateLimit = require('express-rate-limit');
 const VoiceText = require("voicetext");
 
 const VOICETEXT_API_KEY = process.env["VOICETEXT_API_KEY"];
 const VOICETEXT_VOLUME = process.env["VOICETEXT_VOLUME"] || 150;
 const LISTEN_PORT = process.env["LISTEN_PORT"] || 8080;
 const voicedir = path.join(__dirname, 'voice');
+
+const voiceLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 const VALID_DEVICE_ADDRESS = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,253}$/;
 
@@ -120,7 +128,7 @@ app.post('/:deviceAddress', (req, res) => {
     ).catch((err) => res.status(400).send(err.toString()));
 });
 
-app.get('/:deviceAddress', (req, res) => {
+app.get('/:deviceAddress', voiceLimiter, (req, res) => {
     const deviceAddress = validateDeviceAddress(req.params.deviceAddress);
     if (!deviceAddress) {
         return res.status(400).send("Invalid device address.");
