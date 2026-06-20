@@ -120,11 +120,11 @@ app.post('/:deviceAddress', (req, res) => {
                         return reject(err);
                     }
                     console.log("Device notified. " + deviceAddress);
-                    resolve("OK");
+                    resolve();
                 });
             });
         });
-    }).then((success) => res.status(200).type('text/plain').send(success + " Say:" + speak.text + "\n")
+    }).then(() => res.status(200).type('text/plain').send("OK\n")
     ).catch((err) => res.status(400).send(err.toString()));
 });
 
