@@ -116,7 +116,7 @@ app.post('/:deviceAddress', (req, res) => {
                 });
             });
         });
-    }).then((success) => res.status(200).send(success + " Say:" + speak.text + "\n")
+    }).then((success) => res.status(200).type('text/plain').send(success + " Say:" + speak.text + "\n")
     ).catch((err) => res.status(400).send(err.toString()));
 });
 
