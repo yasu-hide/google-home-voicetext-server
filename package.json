@@ -9,7 +9,7 @@
     "author": "yasuhide",
     "license": "MIT",
     "dependencies": {
-        "body-parser": "^1.18.3",
+        "body-parser": "^2.2.2",
         "castv2-client": "^1.1.2",
         "date-utils": "^1.2.21",
         "express": "^4.17.1",
