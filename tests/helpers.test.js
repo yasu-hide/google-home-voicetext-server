@@ -1,5 +1,6 @@
 'use strict'
-const { validateDeviceAddress, safeFilePath, getSpeaker, getEmotion, getEmotionLevel } = require('../app')
+const os = require('os')
+const { validateDeviceAddress, safeFilePath, getSpeaker, getEmotion, getEmotionLevel, getListenAddress } = require('../app')
 
 describe('validateDeviceAddress', () => {
     it('有効なIPアドレスを返す', () => {
@@ -97,5 +98,37 @@ describe('getEmotionLevel', () => {
     })
     it('undefinedは1を返す', () => {
         expect(getEmotionLevel(undefined)).toBe(1)
+    })
+})
+
+describe('getListenAddress', () => {
+    const origListenAddress = process.env.LISTEN_ADDRESS
+    afterEach(() => {
+        if (origListenAddress === undefined) delete process.env.LISTEN_ADDRESS
+        else process.env.LISTEN_ADDRESS = origListenAddress
+        delete process.env.LISTEN_INTERFACE
+        vi.restoreAllMocks()
+    })
+    it('LISTEN_ADDRESSが設定されていれば返す', () => {
+        process.env.LISTEN_ADDRESS = '192.168.1.50'
+        expect(getListenAddress()).toBe('192.168.1.50')
+    })
+    it('どちらも未設定の場合はthrowする', () => {
+        delete process.env.LISTEN_ADDRESS
+        expect(() => getListenAddress()).toThrow('LISTEN_ADDRESS or LISTEN_INTERFACE required')
+    })
+    it('有効なLISTEN_INTERFACEはIPv4アドレスを返す', () => {
+        delete process.env.LISTEN_ADDRESS
+        process.env.LISTEN_INTERFACE = 'eth0'
+        vi.spyOn(os, 'networkInterfaces').mockReturnValueOnce({
+            eth0: [{ family: 'IPv4', address: '10.0.0.1' }]
+        })
+        expect(getListenAddress()).toBe('10.0.0.1')
+    })
+    it('存在しないLISTEN_INTERFACEはTypeErrorで落ちる（本番バグ再現）', () => {
+        delete process.env.LISTEN_ADDRESS
+        process.env.LISTEN_INTERFACE = 'nonexistent'
+        vi.spyOn(os, 'networkInterfaces').mockReturnValueOnce({})
+        expect(() => getListenAddress()).toThrow(TypeError)
     })
 })

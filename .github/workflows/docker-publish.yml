@@ -32,6 +32,9 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Check coverage thresholds
+        run: npm run coverage
+
   build-and-push:
     needs: test
     runs-on: ubuntu-latest
