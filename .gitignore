@@ -2,3 +2,4 @@ node_modules/
 voice/
 .env
 .gstack/
+coverage/
