@@ -4,7 +4,9 @@
     "description": "",
     "main": "main.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "vitest run",
+        "test:watch": "vitest --watch",
+        "coverage": "vitest run --coverage"
     },
     "author": "yasuhide",
     "license": "MIT",
@@ -20,5 +22,10 @@
     },
     "engines": {
         "node": ">=22"
+    },
+    "devDependencies": {
+        "@vitest/coverage-v8": "^4.1.8",
+        "supertest": "^7.2.2",
+        "vitest": "^4.1.8"
     }
 }
