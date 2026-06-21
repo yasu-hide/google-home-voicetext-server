@@ -5,7 +5,8 @@
     "main": "main.js",
     "scripts": {
         "test": "vitest run",
-        "test:watch": "vitest --watch"
+        "test:watch": "vitest --watch",
+        "coverage": "vitest run --coverage"
     },
     "author": "yasuhide",
     "license": "MIT",
