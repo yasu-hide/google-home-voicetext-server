@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/github/yasu-hide/google-home-voicetext-server/graph/badge.svg?token=20EJYSG2T4)](https://codecov.io/github/yasu-hide/google-home-voicetext-server)
+
 # google-home-voicetext-server
 [sikkimtemiさん](https://github.com/sikkimtemi)の[google-home-voicetext](https://github.com/sikkimtemi/google-home-voicetext)のAPIサーバ、ファイルサーバの再実装です。
 
