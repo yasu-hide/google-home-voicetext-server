@@ -11,7 +11,7 @@
     "author": "yasuhide",
     "license": "MIT",
     "dependencies": {
-        "body-parser": "^2.2.2",
+        "body-parser": "^2.3.0",
         "castv2-client": "^1.1.2",
         "date-utils": "^1.2.21",
         "express": "^5.2.1",
