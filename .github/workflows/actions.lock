@@ -11,6 +11,9 @@ workflows:
         - 'docker/metadata-action@v6.2.0'
         - 'docker/setup-buildx-action@v4.4.1'
         - 'docker/setup-qemu-action@v4.4.0'
+    '.github/workflows/gitleaks.yml':
+        - 'actions/checkout@v7.0.1'
+        - 'gitleaks/gitleaks-action@v3.0.0'
     '.github/workflows/test.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/setup-node@v7.1.0'
@@ -63,3 +66,8 @@ dependencies:
         commit: 'sha1-99012661954931238ded8c8b007157a8430204e1'
         owner_id: 5429470
         repo_id: 288487894
+    'gitleaks/gitleaks-action@v3.0.0':
+        ref: 'v3.0.0'
+        commit: 'sha1-e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e'
+        owner_id: 90395851
+        repo_id: 242854909
